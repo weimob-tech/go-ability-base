@@ -1,10 +1,20 @@
 package x
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Code struct {
 	Errcode string `json:"errcode"`
 	Errmsg  string `json:"errmsg"`
+}
+
+func (c Code) GetErrcode() string {
+	return c.Errcode
+}
+
+func (c Code) GetErrmsg() string {
+	return c.Errmsg
 }
 
 type Result interface {
@@ -23,8 +33,12 @@ type BizError struct {
 	Errmsg  string `json:"errmsg,omitempty"`
 }
 
+func Error(code, msg string) error {
+	return &BizError{code, msg}
+}
+
 func ErrorOf(code Code) error {
-	return &BizError{code.Errcode, code.Errmsg}
+	return &BizError{code.GetErrcode(), code.GetErrmsg()}
 }
 
 func (r BizError) GetErrcode() string {
@@ -36,7 +50,7 @@ func (r BizError) GetErrmsg() string {
 }
 
 func (r BizError) Error() string {
-	return fmt.Sprintf("BizError{errcode: %d, errmsg: %s}", r.Errcode, r.Errmsg)
+	return fmt.Sprintf("BizError{errcode: %s, errmsg: %s}", r.Errcode, r.Errmsg)
 }
 
 // result 是返回结果的公共数据结构
@@ -49,7 +63,7 @@ func (r result) GetCode() Code {
 }
 
 func (r result) IsSuccess() bool {
-	return r.Code.Errcode == "0"
+	return r.Code.GetErrcode() == "0"
 }
 
 // EmptyResult 只保留 code，没有任何内容
@@ -71,7 +85,7 @@ func Ok() Result {
 
 func OkAnd[T any](data T) Result {
 	return &AnyResult[T]{
-		result: result{Code{Errmsg: "success"}},
+		result: result{Code{Errcode: "0", Errmsg: "success"}},
 		Data:   data,
 	}
 }
@@ -84,6 +98,6 @@ func Fail(code string, msg string) Result {
 
 func FailAnd(code ErrCode) Result {
 	return &EmptyResult{result{
-		Code{Errcode: code.GetErrcode(), Errmsg: code.GetErrmsg()},
+		Code{Errcode: code.GetErrmsg(), Errmsg: code.GetErrmsg()},
 	}}
 }

@@ -1,8 +1,13 @@
 package codec
 
 import (
-	"encoding/json"
+	"github.com/json-iterator/go"
+	"github.com/json-iterator/go/extra"
 )
+
+func init() {
+	extra.RegisterFuzzyDecoders()
+}
 
 type JsonEncoder interface {
 	Marshal(any) ([]byte, error)
@@ -14,17 +19,13 @@ type JsonDecoder interface {
 	UnmarshalString(string, any) error
 }
 
-type JsonPath interface {
-	GetString([]byte, ...any) (string, error)
-}
-
 type JsonCodec interface {
 	JsonEncoder
 	JsonDecoder
-	JsonPath
 }
 
 var (
+	json = jsoniter.ConfigDefault
 	Json JsonCodec
 )
 
@@ -52,8 +53,4 @@ func (d defaultJsonCodec) Unmarshal(data []byte, v any) error {
 
 func (d defaultJsonCodec) UnmarshalString(s string, a any) error {
 	return json.Unmarshal([]byte(s), a)
-}
-
-func (d defaultJsonCodec) GetString(data []byte, path ...any) (string, error) {
-	panic("implement me")
 }
